@@ -11,7 +11,7 @@ class Task extends Model
         'description',
         'due_date',
         'status',
-        'file',
+        'file_path',
     ];
 
     public function taskList()
