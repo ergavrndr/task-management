@@ -14,16 +14,19 @@ class TaskListController extends Controller
     }
 
     // POST /api/task-lists
-    public function store(Request $request)
-    {
-        $request->validate([
-            'board_id' => 'required|exists:boards,id',
-            'title' => 'required|string|max:255',
-        ]);
+    public function store(Request $request, $boardId)
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+    ]);
 
-        $taskList = TaskList::create($request->only(['board_id', 'title']));
-        return response()->json($taskList, 201);
-    }
+    $taskList = TaskList::create([
+        'board_id' => $boardId,
+        'title' => $request->title,
+    ]);
+
+    return response()->json($taskList, 201);
+}
 
     // GET /api/task-lists/{id}
     public function show($id)

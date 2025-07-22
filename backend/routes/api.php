@@ -22,6 +22,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/boards/{boardId}/task-lists', [TaskListController::class, 'store']);
     Route::post('/task-lists/{taskListId}/tasks', [TaskController::class, 'store']);
+    Route::get('/task-lists/{id}', [TaskListController::class, 'show']);
+    Route::put('/task-lists/{id}', [TaskListController::class, 'update']);
+    Route::delete('/task-lists/{id}', [TaskListController::class, 'destroy']);
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
 });
