@@ -18,19 +18,24 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
+    // Board
     Route::get('/boards', [BoardController::class, 'index']);
     Route::post('/boards', [BoardController::class, 'store']);
     Route::get('/boards/{id}', [BoardController::class, 'show']);
     Route::put('/boards/{id}', [BoardController::class, 'update']);
     Route::delete('/boards/{id}', [BoardController::class, 'destroy']);
 
+    // Task List
     Route::post('/boards/{boardId}/task-lists', [TaskListController::class, 'store']);
     Route::get('/task-lists/{id}', [TaskListController::class, 'show']);
     Route::put('/task-lists/{id}', [TaskListController::class, 'update']);
     Route::delete('/task-lists/{id}', [TaskListController::class, 'destroy']);
+    Route::get('/boards/{boardId}/task-lists', [TaskListController::class, 'index']);
 
+    // Task
+    Route::get('/task-lists/{taskListId}/tasks', [TaskController::class, 'index']); // ✅ Tambah route baca tasks
+    Route::get('/tasks/{id}', [TaskController::class, 'show']);                     // ✅ Tambah route baca 1 task
     Route::post('/task-lists/{taskListId}/tasks', [TaskController::class, 'store']);
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
-
 });

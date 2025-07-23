@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 class BoardController extends Controller
 {
     /**
-     * Menampilkan semua board milik user yang sedang login.
+     * Menampilkan semua board milik user.
      *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -54,9 +54,10 @@ class BoardController extends Controller
     {
         $user = $request->user();
 
-        $board = Board::where('id', $id)
-                      ->where('user_id', $user->id)
-                      ->firstOrFail();
+        $board = Board::with(['taskLists.tasks']) // ⬅️ memuat taskLists dan tasks
+            ->where('id', $id)
+            ->where('user_id', $user->id)
+            ->firstOrFail();
 
         return response()->json($board);
     }

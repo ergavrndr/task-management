@@ -7,35 +7,41 @@ use Illuminate\Http\Request;
 
 class TaskListController extends Controller
 {
-    // GET /api/task-lists
-    public function index()
+
+    public function index(Request $request, $boardId)
     {
-        return TaskList::with('tasks')->get();
+        $user = $request->user();
+
+        $lists = TaskList::where('board_id', $boardId)
+            ->whereHas('board', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->with('tasks')
+            ->get();
+
+        return response()->json($lists);
     }
 
-    // POST /api/task-lists
     public function store(Request $request, $boardId)
-{
-    $request->validate([
-        'title' => 'required|string|max:255',
-    ]);
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
 
-    $taskList = TaskList::create([
-        'board_id' => $boardId,
-        'title' => $request->title,
-    ]);
+        $taskList = TaskList::create([
+            'board_id' => $boardId,
+            'title' => $request->title,
+        ]);
 
-    return response()->json($taskList, 201);
-}
+        return response()->json($taskList, 201);
+    }
 
-    // GET /api/task-lists/{id}
     public function show($id)
     {
         $taskList = TaskList::with('tasks')->findOrFail($id);
         return response()->json($taskList);
     }
 
-    // PUT /api/task-lists/{id}
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -48,7 +54,6 @@ class TaskListController extends Controller
         return response()->json($taskList);
     }
 
-    // DELETE /api/task-lists/{id}
     public function destroy($id)
     {
         $taskList = TaskList::findOrFail($id);

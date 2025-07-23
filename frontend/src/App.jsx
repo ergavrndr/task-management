@@ -18,7 +18,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<LoginPage />} /> {/* fallback terakhir */}
+        <Route path="*" element={<LoginPage />} /> 
       </Routes>
     </BrowserRouter>
   );

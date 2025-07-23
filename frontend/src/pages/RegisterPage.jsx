@@ -1,4 +1,3 @@
-// src/pages/RegisterPage.jsx
 import { useState } from "react";
 import axios from "axios";
 
@@ -19,7 +18,6 @@ const RegisterPage = () => {
         password,
         password_confirmation: passwordConfirmation,
       });
-      // Redirect or login user
       localStorage.setItem("token", response.data.token);
       window.location.href = "/dashboard";
     } catch (err) {
