@@ -16,6 +16,6 @@ class Task extends Model
 
     public function taskList()
     {
-        return $this->belongsTo(TaskList::class); // Diperbarui dari 'list' menjadi 'taskList'
+        return $this->belongsTo(TaskList::class);
     }
 }

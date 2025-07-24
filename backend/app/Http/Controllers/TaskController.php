@@ -8,18 +8,12 @@ use Illuminate\Support\Facades\Storage;
 
 class TaskController extends Controller
 {
-    /**
-     * Menampilkan semua task dalam satu task list.
-     */
     public function index(Request $request, $taskListId)
     {
         $tasks = Task::where('task_list_id', $taskListId)->get();
         return response()->json($tasks);
     }
 
-    /**
-     * Menyimpan task baru.
-     */
     public function store(Request $request, $taskListId)
     {
         $request->validate([
@@ -47,18 +41,14 @@ class TaskController extends Controller
         return response()->json($task, 201);
     }
 
-    /**
-     * Menampilkan detail 1 task.
-     */
+
     public function show($id)
     {
         $task = Task::findOrFail($id);
         return response()->json($task);
     }
 
-    /**
-     * Mengupdate task.
-     */
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -71,7 +61,7 @@ class TaskController extends Controller
 
         $task = Task::findOrFail($id);
 
-        // Jika ada file baru, hapus file lama dan upload baru
+
         if ($request->hasFile('file')) {
             if ($task->file_path) {
                 Storage::disk('public')->delete($task->file_path);
@@ -85,9 +75,7 @@ class TaskController extends Controller
         return response()->json($task);
     }
 
-    /**
-     * Menghapus task.
-     */
+
     public function destroy($id)
     {
         $task = Task::findOrFail($id);

@@ -17,6 +17,6 @@ class Board extends Model
 
     public function taskLists()
     {
-        return $this->hasMany(TaskList::class); // Diperbarui dari 'lists' menjadi 'taskLists'
+        return $this->hasMany(TaskList::class);
     }
 }

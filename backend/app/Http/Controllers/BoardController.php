@@ -15,7 +15,7 @@ class BoardController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user(); // agar Intelephense tidak error
+        $user = $request->user();
         $boards = Board::where('user_id', $user->id)->get();
 
         return response()->json($boards);
@@ -54,7 +54,7 @@ class BoardController extends Controller
     {
         $user = $request->user();
 
-        $board = Board::with(['taskLists.tasks']) // ⬅️ memuat taskLists dan tasks
+        $board = Board::with(['taskLists.tasks'])
             ->where('id', $id)
             ->where('user_id', $user->id)
             ->firstOrFail();

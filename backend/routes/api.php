@@ -7,34 +7,29 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 
-// Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-// Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    // Board
     Route::get('/boards', [BoardController::class, 'index']);
     Route::post('/boards', [BoardController::class, 'store']);
     Route::get('/boards/{id}', [BoardController::class, 'show']);
     Route::put('/boards/{id}', [BoardController::class, 'update']);
     Route::delete('/boards/{id}', [BoardController::class, 'destroy']);
 
-    // Task List
     Route::post('/boards/{boardId}/task-lists', [TaskListController::class, 'store']);
     Route::get('/task-lists/{id}', [TaskListController::class, 'show']);
     Route::put('/task-lists/{id}', [TaskListController::class, 'update']);
     Route::delete('/task-lists/{id}', [TaskListController::class, 'destroy']);
     Route::get('/boards/{boardId}/task-lists', [TaskListController::class, 'index']);
 
-    // Task
-    Route::get('/task-lists/{taskListId}/tasks', [TaskController::class, 'index']); // ✅ Tambah route baca tasks
-    Route::get('/tasks/{id}', [TaskController::class, 'show']);                     // ✅ Tambah route baca 1 task
+    Route::get('/task-lists/{taskListId}/tasks', [TaskController::class, 'index']);
+    Route::get('/tasks/{id}', [TaskController::class, 'show']);
     Route::post('/task-lists/{taskListId}/tasks', [TaskController::class, 'store']);
     Route::put('/tasks/{id}', [TaskController::class, 'update']);
     Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
