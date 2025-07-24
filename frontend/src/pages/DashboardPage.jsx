@@ -17,7 +17,7 @@ const DashboardPage = () => {
   const [editTaskId, setEditTaskId] = useState(null);
   const [editTaskData, setEditTaskData] = useState({});
   const [showTaskForm, setShowTaskForm] = useState({});
-  const [loading, setLoading] = useState(false);
+  const [loadingStates, setLoadingStates] = useState({});
   const [notification, setNotification] = useState({ message: "", type: "" });
 
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ const DashboardPage = () => {
   }, [token]);
 
   const fetchBoards = useCallback(async () => {
-    setLoading(true);
+    setLoadingStates((prev) => ({ ...prev, global: true }));
     try {
       const res = await axios.get("http://localhost:8000/api/boards", {
         headers: { Authorization: `Bearer ${token}` },
@@ -68,16 +68,16 @@ const DashboardPage = () => {
         })
       );
       setTaskLists(taskListData);
-      console.log("Fetched task lists:", taskListData);
     } catch (error) {
       console.error("Failed to fetch boards:", error.response?.data || error.message);
       setNotification({ message: "Failed to load boards.", type: "error" });
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, global: false }));
     }
   }, [token]);
 
   const updateSingleTaskList = useCallback(async (boardId, listId) => {
+    setLoadingStates((prev) => ({ ...prev, [boardId]: true }));
     try {
       const response = await axios.get(
         `http://localhost:8000/api/boards/${boardId}/task-lists`,
@@ -90,6 +90,8 @@ const DashboardPage = () => {
     } catch (error) {
       console.error("Failed to update task list:", error.response?.data || error.message);
       setNotification({ message: "Failed to update task list.", type: "error" });
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [boardId]: false }));
     }
   }, [token]);
 
@@ -99,7 +101,7 @@ const DashboardPage = () => {
       setNotification({ message: "Board title is required.", type: "error" });
       return;
     }
-    setLoading(true);
+    setLoadingStates((prev) => ({ ...prev, global: true }));
     try {
       await axios.post(
         "http://localhost:8000/api/boards",
@@ -113,7 +115,7 @@ const DashboardPage = () => {
       console.error("Failed to add board:", error.response?.data || error.message);
       setNotification({ message: "Failed to add board.", type: "error" });
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, global: false }));
     }
   };
 
@@ -132,7 +134,7 @@ const DashboardPage = () => {
       setNotification({ message: "Board title is required.", type: "error" });
       return;
     }
-    setLoading(true);
+    setLoadingStates((prev) => ({ ...prev, [id]: true }));
     try {
       await axios.put(
         `http://localhost:8000/api/boards/${id}`,
@@ -147,13 +149,13 @@ const DashboardPage = () => {
       console.error("Failed to update board:", error.response?.data || error.message);
       setNotification({ message: "Failed to update board.", type: "error" });
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, [id]: false }));
     }
   };
 
   const handleDeleteBoard = async (id) => {
     if (!window.confirm("Are you sure you want to delete this board?")) return;
-    setLoading(true);
+    setLoadingStates((prev) => ({ ...prev, [id]: true }));
     try {
       await axios.delete(`http://localhost:8000/api/boards/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -164,7 +166,7 @@ const DashboardPage = () => {
       console.error("Failed to delete board:", error.response?.data || error.message);
       setNotification({ message: "Failed to delete board.", type: "error" });
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, [id]: false }));
     }
   };
 
@@ -173,7 +175,7 @@ const DashboardPage = () => {
       setNotification({ message: "List title is required.", type: "error" });
       return;
     }
-    setLoading(true);
+    setLoadingStates((prev) => ({ ...prev, [boardId]: true }));
     try {
       await axios.post(
         `http://localhost:8000/api/boards/${boardId}/task-lists`,
@@ -187,7 +189,7 @@ const DashboardPage = () => {
       console.error("Failed to add task list:", error.response?.data || error.message);
       setNotification({ message: "Failed to add task list.", type: "error" });
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, [boardId]: false }));
     }
   };
 
@@ -206,7 +208,7 @@ const DashboardPage = () => {
       setNotification({ message: "List title is required.", type: "error" });
       return;
     }
-    setLoading(true);
+    setLoadingStates((prev) => ({ ...prev, [boardId]: true }));
     try {
       await axios.put(
         `http://localhost:8000/api/task-lists/${listId}`,
@@ -221,13 +223,13 @@ const DashboardPage = () => {
       console.error("Failed to update task list:", error.response?.data || error.message);
       setNotification({ message: "Failed to update task list.", type: "error" });
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, [boardId]: false }));
     }
   };
 
   const handleDeleteList = async (boardId, listId) => {
     if (!window.confirm("Are you sure you want to delete this task list?")) return;
-    setLoading(true);
+    setLoadingStates((prev) => ({ ...prev, [boardId]: true }));
     try {
       await axios.delete(`http://localhost:8000/api/task-lists/${listId}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -238,7 +240,7 @@ const DashboardPage = () => {
       console.error("Failed to delete task list:", error.response?.data || error.message);
       setNotification({ message: "Failed to delete task list.", type: "error" });
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, [boardId]: false }));
     }
   };
 
@@ -260,7 +262,10 @@ const DashboardPage = () => {
       return;
     }
 
-    setLoading(true);
+    const boardId = taskLists[listId]?.[0]?.board_id || Object.keys(taskLists).find((boardId) =>
+      taskLists[boardId].some((list) => list.id === listId)
+    );
+    setLoadingStates((prev) => ({ ...prev, [boardId]: true }));
     try {
       const formData = new FormData();
       formData.append("title", taskData.title);
@@ -269,11 +274,7 @@ const DashboardPage = () => {
       formData.append("status", taskData.status || "todo");
       if (taskData.file) formData.append("file", taskData.file);
 
-      for (let pair of formData.entries()) {
-        console.log(`FormData (add task): ${pair[0]} = ${pair[1]}`);
-      }
-
-      const response = await axios.post(
+      await axios.post(
         `http://localhost:8000/api/task-lists/${listId}/tasks`,
         formData,
         {
@@ -283,21 +284,15 @@ const DashboardPage = () => {
           },
         }
       );
-      console.log("Task added:", response.data);
       setNewTasks((prev) => ({ ...prev, [listId]: {} }));
       setShowTaskForm((prev) => ({ ...prev, [listId]: false }));
       setNotification({ message: "Task added successfully!", type: "success" });
-      await updateSingleTaskList(
-        taskLists[listId]?.[0]?.board_id || Object.keys(taskLists).find((boardId) =>
-          taskLists[boardId].some((list) => list.id === listId)
-        ),
-        listId
-      );
+      await updateSingleTaskList(boardId, listId);
     } catch (error) {
       console.error("Failed to add task:", error.response?.data || error.message);
       setNotification({ message: "Failed to add task.", type: "error" });
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, [boardId]: false }));
     }
   };
 
@@ -330,7 +325,10 @@ const DashboardPage = () => {
       return;
     }
 
-    setLoading(true);
+    const boardId = taskLists[listId]?.[0]?.board_id || Object.keys(taskLists).find((boardId) =>
+      taskLists[boardId].some((list) => list.id === listId)
+    );
+    setLoadingStates((prev) => ({ ...prev, [boardId]: true }));
     try {
       let response;
       if (editTaskData.file) {
@@ -340,10 +338,6 @@ const DashboardPage = () => {
         formData.append("due_date", editTaskData.due_date || "");
         formData.append("status", editTaskData.status || "todo");
         formData.append("file", editTaskData.file);
-
-        for (let pair of formData.entries()) {
-          console.log(`FormData (update task): ${pair[0]} = ${pair[1]}`);
-        }
 
         response = await axios.put(
           `http://localhost:8000/api/tasks/${taskId}`,
@@ -363,8 +357,6 @@ const DashboardPage = () => {
           status: editTaskData.status || "todo",
         };
 
-        console.log("JSON Data (update task):", taskData);
-
         response = await axios.put(
           `http://localhost:8000/api/tasks/${taskId}`,
           taskData,
@@ -377,16 +369,10 @@ const DashboardPage = () => {
         );
       }
 
-      console.log("Task updated:", response.data);
       setEditTaskId(null);
       setEditTaskData({});
       setNotification({ message: "Task updated successfully!", type: "success" });
-      await updateSingleTaskList(
-        taskLists[listId]?.[0]?.board_id || Object.keys(taskLists).find((boardId) =>
-          taskLists[boardId].some((list) => list.id === listId)
-        ),
-        listId
-      );
+      await updateSingleTaskList(boardId, listId);
     } catch (error) {
       console.error("Failed to update task:", {
         message: error.message,
@@ -412,31 +398,28 @@ const DashboardPage = () => {
         setNotification({ message: "Failed to connect to server.", type: "error" });
       }
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, [boardId]: false }));
     }
   };
 
   const handleDeleteTask = async (listId, taskId) => {
     if (!window.confirm("Are you sure you want to delete this task?")) return;
 
-    setLoading(true);
+    const boardId = taskLists[listId]?.[0]?.board_id || Object.keys(taskLists).find((boardId) =>
+      taskLists[boardId].some((list) => list.id === listId)
+    );
+    setLoadingStates((prev) => ({ ...prev, [boardId]: true }));
     try {
-      const response = await axios.delete(`http://localhost:8000/api/tasks/${taskId}`, {
+      await axios.delete(`http://localhost:8000/api/tasks/${taskId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("Task deleted:", response.data);
       setNotification({ message: "Task deleted successfully!", type: "success" });
-      await updateSingleTaskList(
-        taskLists[listId]?.[0]?.board_id || Object.keys(taskLists).find((boardId) =>
-          taskLists[boardId].some((list) => list.id === listId)
-        ),
-        listId
-      );
+      await updateSingleTaskList(boardId, listId);
     } catch (error) {
       console.error("Failed to delete task:", error.response?.data || error.message);
       setNotification({ message: "Failed to delete task.", type: "error" });
     } finally {
-      setLoading(false);
+      setLoadingStates((prev) => ({ ...prev, [boardId]: false }));
     }
   };
 
@@ -446,7 +429,7 @@ const DashboardPage = () => {
 
   const Task = ({ task, listId }) => {
     return (
-      <li className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+      <li className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm transition-all duration-200">
         {editTaskId === task.id ? (
           <div className="space-y-3">
             <input
@@ -492,11 +475,11 @@ const DashboardPage = () => {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => handleUpdateTask(listId, task.id)}
-                disabled={!editTaskData.title?.trim() || loading}
+                disabled={!editTaskData.title?.trim() || loadingStates[listId]}
                 className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                 aria-label="Save task"
               >
-                {loading ? (
+                {loadingStates[listId] ? (
                   <span className="flex items-center gap-2">
                     <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -561,12 +544,12 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-gray-100 p-6 font-sans">
       <div className="max-w-7xl mx-auto">
-        {/* Notification */}
+
         {notification.message && (
           <div
             className={`fixed top-4 right-4 p-4 rounded-lg shadow-md transition-opacity duration-300 ${
               notification.type === "success" ? "bg-green-500" : "bg-red-500"
-            } text-white text-sm`}
+            } text-white text-sm z-50`}
           >
             {notification.message}
             <button
@@ -602,7 +585,15 @@ const DashboardPage = () => {
           </div>
         </header>
 
-        <form onSubmit={handleAddBoard} className="mb-10 flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <form onSubmit={handleAddBoard} className="mb-10 flex items-center gap-4 bg-white p-4 rounded-lg shadow-sm relative">
+          {loadingStates.global && (
+            <div className="absolute inset-0 bg-gray-200 bg-opacity-50 flex items-center justify-center rounded-lg">
+              <svg className="animate-spin h-6 w-6 text-indigo-600" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+            </div>
+          )}
           <input
             type="text"
             placeholder="Enter board title"
@@ -610,10 +601,11 @@ const DashboardPage = () => {
             onChange={(e) => setNewBoard(e.target.value)}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             aria-label="Board title"
+            disabled={loadingStates.global}
           />
           <button
             type="submit"
-            disabled={!newBoard.trim() || loading}
+            disabled={!newBoard.trim() || loadingStates.global}
             className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
             aria-label="Add board"
           >
@@ -622,15 +614,21 @@ const DashboardPage = () => {
         </form>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading && <div className="text-center text-gray-500">Loading...</div>}
           {boards.map((board) => (
             <div
               key={board.id}
-              className={`bg-white p-6 rounded-xl shadow-md border border-gray-200 ${
-                taskLists[board.id]?.length > 0 ? "min-h-[400px]" : ""
+              className={`bg-white p-6 rounded-xl shadow-md border border-gray-200 relative transition-all duration-200 ${
+                taskLists[board.id]?.length > 0 ? "min-h-[400px]" : "min-h-[200px]"
               }`}
             >
-
+              {loadingStates[board.id] && (
+                <div className="absolute inset-0 bg-gray-200 bg-opacity-50 flex items-center justify-center rounded-xl z-10">
+                  <svg className="animate-spin h-6 w-6 text-indigo-600" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                </div>
+              )}
               {editBoardId === board.id ? (
                 <div className="mb-4">
                   <input
@@ -639,11 +637,12 @@ const DashboardPage = () => {
                     onChange={(e) => setEditTitle(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                     aria-label="Edit board title"
+                    disabled={loadingStates[board.id]}
                   />
                   <div className="flex justify-end gap-2 mt-3">
                     <button
                       onClick={() => handleUpdateBoard(board.id)}
-                      disabled={!editTitle.trim() || loading}
+                      disabled={!editTitle.trim() || loadingStates[board.id]}
                       className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                       aria-label="Save board"
                     >
@@ -653,6 +652,7 @@ const DashboardPage = () => {
                       onClick={handleCancelEdit}
                       className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
                       aria-label="Cancel edit"
+                      disabled={loadingStates[board.id]}
                     >
                       Cancel
                     </button>
@@ -666,6 +666,7 @@ const DashboardPage = () => {
                       onClick={() => handleEditBoard(board)}
                       className="text-indigo-600 hover:text-indigo-800 transition-colors"
                       aria-label="Edit board"
+                      disabled={loadingStates[board.id]}
                     >
                       <Edit2 className="w-5 h-5" />
                     </button>
@@ -673,6 +674,7 @@ const DashboardPage = () => {
                       onClick={() => handleDeleteBoard(board.id)}
                       className="text-red-600 hover:text-red-800 transition-colors"
                       aria-label="Delete board"
+                      disabled={loadingStates[board.id]}
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -693,10 +695,11 @@ const DashboardPage = () => {
                   }
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                   aria-label="New list title"
+                  disabled={loadingStates[board.id]}
                 />
                 <button
                   onClick={() => handleAddList(board.id)}
-                  disabled={!newListTitles[board.id]?.trim() || loading}
+                  disabled={!newListTitles[board.id]?.trim() || loadingStates[board.id]}
                   className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
                   aria-label="Add list"
                 >
@@ -708,9 +711,8 @@ const DashboardPage = () => {
                 {taskLists[board.id]?.map((list) => (
                   <div
                     key={list.id}
-                    className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+                    className="bg-gray-50 p-4 rounded-lg border border-gray-200 transition-all duration-200"
                   >
-
                     {editListId === list.id ? (
                       <div className="mb-3">
                         <input
@@ -719,11 +721,12 @@ const DashboardPage = () => {
                           onChange={(e) => setEditListTitle(e.target.value)}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                           aria-label="Edit list title"
+                          disabled={loadingStates[board.id]}
                         />
                         <div className="flex justify-end gap-2 mt-2">
                           <button
                             onClick={() => handleUpdateList(board.id, list.id)}
-                            disabled={!editListTitle.trim() || loading}
+                            disabled={!editListTitle.trim() || loadingStates[board.id]}
                             className="bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
                             aria-label="Save list"
                           >
@@ -733,6 +736,7 @@ const DashboardPage = () => {
                             onClick={handleCancelEditList}
                             className="bg-gray-500 text-white px-3 py-1 rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
                             aria-label="Cancel edit list"
+                            disabled={loadingStates[board.id]}
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -748,6 +752,7 @@ const DashboardPage = () => {
                             onClick={() => handleEditList(list)}
                             className="text-indigo-600 hover:text-indigo-800 transition-colors"
                             aria-label="Edit list"
+                            disabled={loadingStates[board.id]}
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -755,6 +760,7 @@ const DashboardPage = () => {
                             onClick={() => handleDeleteList(board.id, list.id)}
                             className="text-red-600 hover:text-red-800 transition-colors"
                             aria-label="Delete list"
+                            disabled={loadingStates[board.id]}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -776,6 +782,7 @@ const DashboardPage = () => {
                       onClick={() => toggleTaskForm(list.id)}
                       className="mt-3 w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
                       aria-label="Toggle new task form"
+                      disabled={loadingStates[board.id]}
                     >
                       <PlusCircle className="w-4 h-4" /> {showTaskForm[list.id] ? "Hide Form" : "New Task"}
                     </button>
@@ -795,6 +802,7 @@ const DashboardPage = () => {
                               onChange={(e) => handleTaskInputChange(list.id, "title", e.target.value)}
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                               aria-label="Task title"
+                              disabled={loadingStates[board.id]}
                             />
                           </div>
                           <div>
@@ -809,6 +817,7 @@ const DashboardPage = () => {
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                               rows="3"
                               aria-label="Task description"
+                              disabled={loadingStates[board.id]}
                             />
                           </div>
                           <div>
@@ -822,6 +831,7 @@ const DashboardPage = () => {
                               onChange={(e) => handleTaskInputChange(list.id, "due_date", e.target.value)}
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                               aria-label="Task due date"
+                              disabled={loadingStates[board.id]}
                             />
                           </div>
                           <div>
@@ -834,6 +844,7 @@ const DashboardPage = () => {
                               onChange={(e) => handleTaskInputChange(list.id, "status", e.target.value)}
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                               aria-label="Task status"
+                              disabled={loadingStates[board.id]}
                             >
                               <option value="todo">To Do</option>
                               <option value="in_progress">In Progress</option>
@@ -850,16 +861,17 @@ const DashboardPage = () => {
                               onChange={(e) => handleTaskInputChange(list.id, "file", e.target.files[0])}
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
                               aria-label="Task file"
+                              disabled={loadingStates[board.id]}
                             />
                           </div>
                         </div>
                         <button
                           type="submit"
-                          disabled={!newTasks[list.id]?.title?.trim() || loading}
+                          disabled={!newTasks[list.id]?.title?.trim() || loadingStates[board.id]}
                           className="w-full mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
                           aria-label="Add task"
                         >
-                          {loading ? (
+                          {loadingStates[board.id] ? (
                             <span className="flex items-center gap-2">
                               <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
